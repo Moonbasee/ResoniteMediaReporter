@@ -1,4 +1,5 @@
-﻿using Windows.Media.Control;
+﻿using System.Runtime.InteropServices;
+using Windows.Media.Control;
 
 namespace ResoniteMediaReporter.Services
 {
@@ -23,17 +24,24 @@ namespace ResoniteMediaReporter.Services
 
             MediaTransportControlsSessionManager.CurrentSessionChanged += MediaTransportControlsSessionManager_CurrentSessionChanged;
 
-            // try and get current session
-            CurrentMediaSession = MediaTransportControlsSessionManager.GetCurrentSession();
-            if (CurrentMediaSession != null)
+            try
             {
-                CurrentMediaProperties = CurrentMediaSession.TryGetMediaPropertiesAsync().GetAwaiter().GetResult();
-                CurrentMediaSession.MediaPropertiesChanged += CurrentMediaSession_MediaPropertiesChanged;
-                CurrentMediaSession.PlaybackInfoChanged += CurrentMediaSession_PlaybackInfoChanged;
+                // try and get current session
+                CurrentMediaSession = MediaTransportControlsSessionManager.GetCurrentSession();
+                if (CurrentMediaSession != null)
+                {
+                    CurrentMediaProperties = CurrentMediaSession.TryGetMediaPropertiesAsync().GetAwaiter().GetResult();
+                    CurrentMediaSession.MediaPropertiesChanged += CurrentMediaSession_MediaPropertiesChanged;
+                    CurrentMediaSession.PlaybackInfoChanged += CurrentMediaSession_PlaybackInfoChanged;
 
-                UpdateAndGetCurrentlyPlayingMedia();
+                    UpdateAndGetCurrentlyPlayingMedia();
+                }
+                else WSSession.SendText("Not Currently Playing Anything");
+            } catch (Exception ex)
+            {
+                Console.WriteLine($"Exception In WMS. Try Restarting Your Media Player.\n{ex.Message}\n{ex.StackTrace}");
+                return;
             }
-            else WSSession.SendText("Not Currently Playing Anything");
 
             Console.WriteLine("WMS Ready");
         }
